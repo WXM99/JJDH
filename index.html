@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>JJDH Shanghai Wedding</title>
+    <style>
+        :root {
+            --bg-color: #FFF0F5;
+            --hit-color: #FF1493;
+            --accent-color: #00CED1;
+            --shanghai-night: #1A1A40;
+        }
+        body, html {
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            background-color: var(--bg-color);
+            color: #333; font-family: 'Microsoft YaHei', sans-serif;
+            overflow: hidden; touch-action: none;
+        }
+        #game-container { position: relative; width: 100vw; height: 100vh; display: flex; flex-direction: column; }
+
+        /* 上海地标舞台区 */
+        #stage {
+            flex: 1; position: relative;
+            background: linear-gradient(180deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+            display: flex; justify-content: center; align-items: flex-end;
+            overflow: hidden;
+        }
+
+        /* 上海天际线 SVG 样式 */
+        #skyline {
+            position: absolute; bottom: 0; width: 100%; height: 100%;
+            z-index: 1; opacity: 0.8;
+        }
+
+        #character-wrapper {
+            position: relative; display: flex; justify-content: center; align-items: flex-end;
+            transition: all 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 10;
+            margin-bottom: 10px;
+        }
+        .char-svg { width: 90px; height: 120px; filter: drop-shadow(0 0 5px rgba(255,255,255,0.5)); }
+        
+        /* 能量与新郎 */
+        #energy-section {
+            position: absolute; left: 15px; bottom: 20px;
+            display: flex; flex-direction: column; align-items: center; z-index: 20;
+        }
+        #groom-cheer { width: 50px; height: 70px; margin-bottom: 5px; }
+        #energy-bar-container {
+            width: 20px; height: 100px; border: 2px solid white;
+            background: rgba(255,255,255,0.2); border-radius: 10px; overflow: hidden; position: relative;
+        }
+        #energy-fill {
+            position: absolute; bottom: 0; width: 100%; height: 0%;
+            background: linear-gradient(to top, #FF69B4, #00FFCC);
+            box-shadow: 0 0 10px #FF69B4; transition: height 0.2s;
+        }
+
+        /* 轨道区 */
+        #rhythm-area {
+            height: 50%; position: relative; display: flex;
+            background: rgba(255, 255, 255, 0.9); border-top: 5px solid #FF1493;
+        }
+        .track { width: 25%; height: 100%; border-right: 1px dashed #FFB6C1; position: relative; }
+        .hit-zone {
+            position: absolute; bottom: 40px; width: 100%; height: 80px;
+            background: rgba(255, 20, 147, 0.1); border-top: 2px solid var(--hit-color);
+            display: flex; justify-content: center; align-items: center;
+        }
+        .hit-zone::after { content: 'OK'; font-weight: bold; color: var(--hit-color); opacity: 0.3; }
+        .note { position: absolute; width: 50px; height: 50px; left: 50%; transform: translateX(-50%); z-index: 5; }
+
+        /* 胜利状态 */
+        .win-scene { transform: scale(2.5) translateY(-30%); }
+        #finish-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255,255,255,0.9);
+            display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 100;
+        }
+        .jjdh-text {
+            font-size: 80px; font-weight: 900; color: #FF1493;
+            text-shadow: 3px 3px 0px #00CED1; animation: bounce 0.6s infinite alternate;
+        }
+        @keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-20px); } }
+
+        #start-screen {
+            position: absolute; top:0; left:0; width:100%; height:100%;
+            background: var(--shanghai-night); z-index: 200; display: flex; flex-direction: column;
+            justify-content: center; align-items: center; color: white;
+        }
+        .btn {
+            padding: 15px 40px; font-size: 20px; background: #FF1493; color: white;
+            border: none; border-radius: 30px; box-shadow: 0 5px 0 #C71585; cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+<div id="start-screen">
+    <h1 style="color:#FF1493; text-shadow: 0 0 10px #FF1493;">JJDH~~</h1>
+    <p>JinJin ♥ TaoTao</p>
+    <button class="btn" onclick="startGame()">start</button>
+</div>
+
+<div id="game-container">
+    <div id="stage">
+        <svg id="skyline" viewBox="0 0 400 300" preserveAspectRatio="xMidYMax slice">
+            <rect x="50" y="150" width="4" height="150" fill="#FF00FF" opacity="0.6" />
+            <circle cx="52" cy="180" r="12" fill="#FF00FF" />
+            <circle cx="52" cy="230" r="15" fill="#FF00FF" />
+            <rect x="51" y="100" width="2" height="50" fill="#FF00FF" />
+            <path d="M120 300 L140 300 L135 50 Q130 40 125 50 Z" fill="#00D1FF" opacity="0.5" />
+            <path d="M180 300 L210 300 L205 80 L185 80 Z" fill="#007FFF" opacity="0.6" />
+            <rect x="190" y="90" width="10" height="12" fill="#0f0c29" />
+            <path d="M240 300 L270 300 L265 120 L245 120 Z" fill="#FFD700" opacity="0.4" />
+            <circle cx="130" cy="60" r="2" fill="white"><animate attributeName="opacity" values="0;1;0" dur="2s" repeatCount="indefinite"/></circle>
+            <circle cx="200" cy="90" r="2" fill="white"><animate attributeName="opacity" values="0;1;0" dur="1.5s" repeatCount="indefinite"/></circle>
+        </svg>
+
+        <div id="energy-section">
+            <svg id="groom-cheer" class="char-svg" viewBox="0 0 100 120"><use href="#svg-groom-content"/></svg>
+            <div id="energy-bar-container"><div id="energy-fill"></div></div>
+        </div>
+        <div id="character-wrapper">
+            <svg id="bride-main" class="char-svg" viewBox="0 0 100 120"><use href="#svg-bride-content"/></svg>
+            <svg id="groom-final" class="char-svg" viewBox="0 0 100 120" style="display:none; margin-left: -30px;"><use href="#svg-groom-content"/></svg>
+        </div>
+    </div>
+    
+    <div id="rhythm-area">
+        <div class="track" data-idx="0"><div class="hit-zone"></div></div>
+        <div class="track" data-idx="1"><div class="hit-zone"></div></div>
+        <div class="track" data-idx="2"><div class="hit-zone"></div></div>
+        <div class="track" data-idx="3"><div class="hit-zone"></div></div>
+    </div>
+    
+    <div id="finish-overlay">
+        <div class="jjdh-text">JJDH</div>
+        <h2 style="color:#FF1493">JinJin ❤ TaoTao</h2>
+        <button class="btn" onclick="location.reload()">again</button>
+    </div>
+</div>
+
+<svg style="display:none">
+    <symbol id="svg-bride-content" viewBox="0 0 100 120">
+        <path d="M50 35 Q50 5 80 15" stroke="#DDD" fill="white" />
+        <circle cx="50" cy="25" r="12" fill="#FFE4E1" stroke="#333" stroke-width="2"/>
+        <path d="M30 45 L70 45 L90 110 L10 110 Z" fill="#FFF" stroke="#FFB6C1" stroke-width="2" />
+        <path d="M35 50 L15 75 M65 50 L85 75" stroke="#333" stroke-width="4" stroke-linecap="round" />
+    </symbol>
+    <symbol id="svg-groom-content" viewBox="0 0 100 120">
+        <circle cx="50" cy="25" r="11" fill="#FFE4E1" stroke="#333" stroke-width="2"/>
+        <rect x="35" y="36" width="30" height="45" rx="5" fill="#444" />
+        <path d="M40 80 L38 115 M60 80 L62 115" stroke="#333" stroke-width="7" />
+        <path d="M45 42 L55 42 L50 50 Z" fill="#FF1493" />
+    </symbol>
+    <symbol id="icon-ring" viewBox="0 0 50 50"><circle cx="25" cy="30" r="12" fill="none" stroke="#FFD700" stroke-width="4" /><path d="M25 10 L35 22 L25 34 L15 22 Z" fill="#00BFFF" /></symbol>
+    <symbol id="icon-cake" viewBox="0 0 50 50"><rect x="10" y="25" width="30" height="15" fill="#FFB6C1" /><rect x="15" y="15" width="20" height="10" fill="#FFF" /><circle cx="25" cy="12" r="4" fill="#FF0000" /></symbol>
+    <symbol id="icon-flower" viewBox="0 0 50 50"><circle cx="25" cy="25" r="8" fill="#FFD700" /><path d="M25 5 Q35 15 25 25 Q15 15 25 5" fill="#FF69B4" transform="rotate(0 25 25)"/><path d="M25 5 Q35 15 25 25 Q15 15 25 5" fill="#FF69B4" transform="rotate(72 25 25)"/></symbol>
+    <symbol id="icon-hongbao" viewBox="0 0 50 50"><rect x="12" y="10" width="26" height="35" rx="3" fill="#FF4500" /><circle cx="25" cy="25" r="6" fill="#FFD700" /><text x="22" y="28" font-size="8" fill="#B22222">福</text></symbol>
+</svg>
+
+<script>
+    const items = ['ring', 'cake', 'flower', 'hongbao'];
+    const tracks = document.querySelectorAll('.track');
+    const energyFill = document.getElementById('energy-fill');
+    const characterWrapper = document.getElementById('character-wrapper');
+    const brideMain = document.getElementById('bride-main');
+    const groomFinal = document.getElementById('groom-final');
+    const groomCheer = document.getElementById('groom-cheer');
+    const finishOverlay = document.getElementById('finish-overlay');
+
+    let energy = 0;
+    let gameActive = false;
+    let notes = [];
+    const speed = 6;
+
+    // --- 8-bit 婚礼进行曲 (门德尔松版) ---
+    let audioCtx = null;
+    function playWeddingMarch() {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        // 简化的门德尔松婚礼进行曲旋律 (C, F, F, F...)
+        const march = [
+            {f: 261.63, d: 0.4}, {f: 349.23, d: 0.2}, {f: 349.23, d: 0.2}, {f: 349.23, d: 0.4}, // C4, F4, F4, F4
+            {f: 261.63, d: 0.4}, {f: 440.00, d: 0.2}, {f: 349.23, d: 0.2}, {f: 261.63, d: 0.4}, // C4, A4, F4, C4
+            {f: 440.00, d: 0.2}, {f: 349.23, d: 0.6}  // A4, F4
+        ];
+        
+        let i = 0;
+        function playNote() {
+            if (!gameActive) return;
+            const note = march[i % march.length];
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            
+            osc.type = 'square'; // 经典的 8-bit 方波
+            osc.frequency.setValueAtTime(note.f, audioCtx.currentTime);
+            
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + note.d);
+            
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            
+            osc.start();
+            osc.stop(audioCtx.currentTime + note.d);
+            
+            i++;
+            setTimeout(playNote, note.d * 1000 + 50);
+        }
+        playNote();
+    }
+
+    function startGame() {
+        document.getElementById('start-screen').style.display = 'none';
+        gameActive = true;
+        playWeddingMarch();
+        spawnNote();
+        update();
+    }
+
+    function spawnNote() {
+        if (!gameActive) return;
+        const trackIdx = Math.floor(Math.random() * 4);
+        const itemType = items[Math.floor(Math.random() * items.length)];
+        const noteEl = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+        noteEl.setAttribute("class", "note");
+        noteEl.innerHTML = `<use href="#icon-${itemType}"/>`;
+        tracks[trackIdx].appendChild(noteEl);
+        notes.push({ el: noteEl, y: -60, track: trackIdx });
+        setTimeout(spawnNote, 450 + Math.random() * 500);
+    }
+
+    function update() {
+        if (gameActive || energy >= 100) {
+            notes.forEach((note, index) => {
+                note.y += speed;
+                note.el.style.top = note.y + 'px';
+                if (note.y > window.innerHeight * 0.5) {
+                    note.el.remove();
+                    notes.splice(index, 1);
+                }
+            });
+            const time = Date.now() / 150;
+            if (gameActive) {
+                brideMain.style.transform = `rotate(${Math.sin(time) * 10}deg) translateY(${Math.abs(Math.cos(time)) * 8}px)`;
+                groomCheer.style.transform = `scale(${1 + Math.sin(time) * 0.15})`;
+            }
+        }
+        requestAnimationFrame(update);
+    }
+
+    function handleInput(trackIdx) {
+        if (!gameActive) return;
+        const hitY = window.innerHeight * 0.5 - 90;
+        for (let i = 0; i < notes.length; i++) {
+            const note = notes[i];
+            if (note.track === trackIdx && Math.abs(note.y - hitY) < 60) {
+                note.el.style.transform = 'scale(2)';
+                note.el.style.opacity = '0';
+                notes.splice(i, 1);
+                energy += 4;
+                energyFill.style.height = Math.min(energy, 100) + '%';
+                if (energy >= 100) triggerWin();
+                break;
+            }
+        }
+    }
+
+    function triggerWin() {
+        gameActive = false;
+        document.getElementById('energy-section').style.opacity = '0';
+        groomFinal.style.display = 'block';
+        characterWrapper.classList.add('win-scene');
+        setTimeout(() => { finishOverlay.style.display = 'flex'; }, 2000);
+    }
+
+    tracks.forEach((t, idx) => {
+        t.addEventListener('touchstart', (e) => { e.preventDefault(); handleInput(idx); });
+        t.addEventListener('mousedown', () => handleInput(idx));
+    });
+</script>
+</body>
+</html>
